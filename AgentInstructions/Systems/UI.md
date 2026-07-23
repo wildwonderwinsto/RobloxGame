@@ -1,6 +1,6 @@
 # React Luau — UI System Context
 
-**Purpose:** reference context for any AI agent or contributor building UI in this repo. Describes how UI is built with React Luau — no ScreenGuis hand-placed in Studio, no manually authored instance trees. UI is code. Pairs with `roblox-structure-agent.md`, `roblox-workflow-setup-context.md`, and `roblox-data-service-context.md`.
+**Purpose:** reference context for any AI agent or contributor building UI in this repo. Describes how UI is built with React Luau — no ScreenGuis hand-placed in Studio, no manually authored instance trees. UI is code. Pairs with `Structure.md`, `SetupContext.md`, and `DataSystem.md`.
 
 **Source reference:** based on the walkthrough in this video: https://www.youtube.com/watch?v=Ezk3vEOvv8o
 

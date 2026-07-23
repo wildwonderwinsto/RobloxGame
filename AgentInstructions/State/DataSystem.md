@@ -1,6 +1,6 @@
 # DataService — Player Data System Context
 
-**Purpose:** reference context for any AI agent or contributor working with player data in this repo. Describes what DataService is, how to set it up, and the conventions this project follows when reading/writing/replicating player data. Pairs with `roblox-structure-agent.md` and `roblox-workflow-setup-context.md`.
+**Purpose:** reference context for any AI agent or contributor working with player data in this repo. Describes what DataService is, how to set it up, and the conventions this project follows when reading/writing/replicating player data. Pairs with `Structure.md` and `SetupContext.md`.
 
 **Source reference:** based on the walkthrough in this video: https://www.youtube.com/watch?v=YSNAFlRF96o
 
@@ -176,7 +176,7 @@ When working with player data in this repo:
 
 # DataService Typed — Player Data System Context
 
-**Purpose:** reference context for any AI agent or contributor working with player data in this repo, if this project uses **DataService Typed** instead of (or alongside) base DataService. Describes the proxy-table API and how it differs from base DataService. Pairs with `roblox-data-service-context.md`, `roblox-structure-agent.md`, and `roblox-workflow-setup-context.md`.
+**Purpose:** reference context for any AI agent or contributor working with player data in this repo, if this project uses **DataService Typed** instead of (or alongside) base DataService. Describes the proxy-table API and how it differs from base DataService. Pairs with `Structure.md` and `SetupContext.md`.
 
 **Relationship to DataService:** DataService Typed is built on the same underlying stack as DataService (ProfileStore, automatic saving, automatic client replication). It is not a different backend — it's a different, fully-typed **interaction API** on top of the same guarantees. If this project has adopted DataService Typed, do not also hand-roll calls against base DataService's `Get`/`Set`/`Update`/`GetChangeSignal` API — pick one convention and use it consistently. Check which package is actually installed (`DataService` vs `DataServiceTyped` in `wally.toml`) before writing data-access code.
 
