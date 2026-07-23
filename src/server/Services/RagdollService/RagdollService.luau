@@ -1,8 +1,8 @@
 local Players = game:GetService("Players")
 local PhysicsService = game:GetService("PhysicsService")
-local ServerScriptService = game:GetService("ServerScriptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Janitor = require(ServerScriptService.ServerPackages.Janitor)
+local Janitor = require(ReplicatedStorage.Packages.Janitor)
 
 -- Incremental ragdoll: Testing limits on legs first
 type JointConfig = {
