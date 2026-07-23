@@ -7,3 +7,4 @@ realm = "shared"
 [dependencies]
 
 [server-dependencies]
+Janitor = "howmanysmall/janitor@1"

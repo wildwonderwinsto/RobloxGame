@@ -1,1 +1,3 @@
-print("Hello world, from server!")
+local RagdollService = require(script.Services.RagdollService.RagdollService)
+
+RagdollService:Init()
