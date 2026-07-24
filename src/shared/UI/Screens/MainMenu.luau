@@ -2,6 +2,10 @@ local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local React = require(ReplicatedStorage.Packages.React)
+local Charm = require(ReplicatedStorage.Packages.Charm)
+
+local GameFlowAtoms = require(ReplicatedStorage.Shared.State.GameFlowAtoms)
+
 local e = React.createElement
 
 export type MainMenuProps = {
@@ -12,7 +16,20 @@ local function MainMenu(props: MainMenuProps)
 	local buttonRef = React.useRef(nil :: TextButton?)
 	local strokeRef = React.useRef(nil :: UIStroke?)
 
+	-- Track the current phase so we can disable the button during transitions
+	local phase, setPhase = React.useState(GameFlowAtoms.phase())
+
+	React.useEffect(function()
+		local cleanup = Charm.subscribe(GameFlowAtoms.phase, function(newPhase)
+			setPhase(newPhase)
+		end)
+		return cleanup
+	end, {})
+
+	local isReady = phase == "Menu"
+
 	local function onMouseEnter()
+		if not isReady then return end
 		local btn = buttonRef.current
 		if btn then
 			TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
@@ -22,6 +39,7 @@ local function MainMenu(props: MainMenuProps)
 	end
 
 	local function onMouseLeave()
+		if not isReady then return end
 		local btn = buttonRef.current
 		if btn then
 			TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
@@ -64,14 +82,19 @@ local function MainMenu(props: MainMenuProps)
 			Position = UDim2.fromScale(0.5, 0.55),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			BackgroundColor3 = Color3.new(0, 0, 0),
-			BackgroundTransparency = 0.5,
+			BackgroundTransparency = if isReady then 0.5 else 0.7,
 			Text = "Play Game",
 			TextColor3 = Color3.new(1, 1, 1),
+			TextTransparency = if isReady then 0 else 0.5,
 			TextScaled = true,
 			Font = Enum.Font.GothamBold,
 			AutoButtonColor = false,
 			BorderSizePixel = 0,
-			[React.Event.Activated] = props.onPlay,
+			[React.Event.Activated] = function()
+				if isReady then
+					props.onPlay()
+				end
+			end,
 			[React.Event.MouseEnter] = onMouseEnter,
 			[React.Event.MouseLeave] = onMouseLeave,
 		}, {

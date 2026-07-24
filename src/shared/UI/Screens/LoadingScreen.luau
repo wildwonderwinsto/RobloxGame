@@ -81,14 +81,28 @@ local function LoadingScreen(props: LoadingScreenProps)
 				ZIndex = 0,
 			}),
 		}),
-		Spinner = e("ImageLabel", {
-			Size = UDim2.fromOffset(80, 80),
+		Spinner = e("Frame", {
+			Size = UDim2.fromOffset(60, 60),
 			Position = UDim2.fromScale(0.5, 0.55),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://6031302931",
-			ImageColor3 = Color3.fromRGB(220, 220, 255),
 			Rotation = rotation,
+		}, {
+			Corner = e("UICorner", { CornerRadius = UDim.new(1, 0) }),
+			Stroke = e("UIStroke", {
+				Color = Color3.fromRGB(220, 220, 255),
+				Thickness = 3,
+				ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			}, {
+				Gradient = e("UIGradient", {
+					Transparency = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, 0),
+						NumberSequenceKeypoint.new(0.5, 0.8),
+						NumberSequenceKeypoint.new(1, 1),
+					}),
+					Rotation = 90,
+				}),
+			}),
 		}),
 		Status = e("TextLabel", {
 			Size = UDim2.fromScale(0.4, 0.04),

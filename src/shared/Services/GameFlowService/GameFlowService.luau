@@ -43,8 +43,56 @@ function GameFlowService.Init(_self: GameFlowService)
 		GameFlowAtoms.phase("Loading")
 		local loadStart = os.clock()
 
+		-- Find camera paths once for streaming + playback
+		local cameraPaths = Workspace:FindFirstChild("CameraPaths")
+			or ReplicatedStorage:FindFirstChild("CameraPaths")
+
+		-- Wait for the server to create the Remotes folder (SpawnService creates it)
+		local remotesFolder = ReplicatedStorage:WaitForChild("Remotes", 10)
+		local updateFocus = if remotesFolder then remotesFolder:WaitForChild("UpdateFocus", 5) else nil
+
+		-- Move the server-side ReplicationFocus to the kitchen/scene area
+		if updateFocus and cameraPaths then
+			local introPath = cameraPaths:FindFirstChild("IntroPath")
+			if introPath then
+				local positions = {}
+				for _, child in introPath:GetChildren() do
+					if child:IsA("BasePart") and child.Name ~= "FocusTarget" then
+						table.insert(positions, child.Position)
+					end
+				end
+
+				if #positions > 0 then
+					-- Move server focus to center of path for broad coverage
+					local center = Vector3.zero
+					for _, pos in positions do
+						center = center + pos
+					end
+					center = center / #positions
+					
+					updateFocus:FireServer(center)
+
+					-- Yield until the center is streamed in (up to 5 seconds)
+					pcall(function()
+						player:RequestStreamAroundAsync(center, 5)
+					end)
+
+					-- Also request around each waypoint to ensure the full path is loaded
+					for _, pos in positions do
+						pcall(function()
+							player:RequestStreamAroundAsync(pos, 1)
+						end)
+					end
+				end
+			end
+		end
+
+		-- Now preload all assets (textures, meshes, sounds)
 		pcall(function()
-			ContentProvider:PreloadAsync(game:GetDescendants())
+			ContentProvider:PreloadAsync(Workspace:GetDescendants())
+		end)
+		pcall(function()
+			ContentProvider:PreloadAsync(ReplicatedStorage:GetDescendants())
 		end)
 
 		local elapsed = os.clock() - loadStart
@@ -56,8 +104,6 @@ function GameFlowService.Init(_self: GameFlowService)
 		local useFocus = math.random() > 0.5
 		local focusTarget = nil
 		if useFocus then
-			local cameraPaths = Workspace:FindFirstChild("CameraPaths")
-				or ReplicatedStorage:FindFirstChild("CameraPaths")
 			if cameraPaths then
 				local introPath = cameraPaths:FindFirstChild("IntroPath")
 				if introPath then
@@ -95,7 +141,6 @@ function GameFlowService.Init(_self: GameFlowService)
 		-- === SPAWN ===
 		CameraService:Stop()
 
-		local remotesFolder = ReplicatedStorage:WaitForChild("Remotes")
 		local requestSpawn = remotesFolder:WaitForChild("RequestSpawn")
 		requestSpawn:FireServer()
 
