@@ -6,9 +6,11 @@ local sharedFolder = ReplicatedStorage:WaitForChild("Shared")
 local CameraService = require(sharedFolder.Services.CameraService.CameraService)
 local GameFlowService = require(sharedFolder.Services.GameFlowService.GameFlowService)
 local LookServiceClient = require(sharedFolder.Services.LookService.LookServiceClient)
+local RewardRevealClient = require(sharedFolder.Services.RewardRevealService.RewardRevealClient)
 
 CameraService:Init() -- Baseline blur/DoF on CurrentCamera
 GameFlowService:Init() -- Mounts UI, starts Loading → Menu → Play flow
 LookServiceClient:Init()
+RewardRevealClient:Init()
 
 print("Client services initialized!")

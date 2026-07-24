@@ -29,7 +29,9 @@ local function MainMenu(props: MainMenuProps)
 	local isReady = phase == "Menu"
 
 	local function onMouseEnter()
-		if not isReady then return end
+		if not isReady then
+			return
+		end
 		local btn = buttonRef.current
 		if btn then
 			TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
@@ -39,7 +41,9 @@ local function MainMenu(props: MainMenuProps)
 	end
 
 	local function onMouseLeave()
-		if not isReady then return end
+		if not isReady then
+			return
+		end
 		local btn = buttonRef.current
 		if btn then
 			TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
@@ -59,7 +63,7 @@ local function MainMenu(props: MainMenuProps)
 			Position = UDim2.fromScale(0.5, 0.3),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			BackgroundTransparency = 1,
-			Text = "G A M E   1",
+			Text = "game1",
 			TextColor3 = Color3.new(1, 1, 1),
 			TextScaled = true,
 			Font = Enum.Font.GothamBold,
@@ -68,7 +72,7 @@ local function MainMenu(props: MainMenuProps)
 				Size = UDim2.fromScale(1, 1),
 				Position = UDim2.fromOffset(0, 4),
 				BackgroundTransparency = 1,
-				Text = "G A M E   1",
+				Text = "game1",
 				TextColor3 = Color3.new(0, 0, 0),
 				TextTransparency = 0.6,
 				TextScaled = true,

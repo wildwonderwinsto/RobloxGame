@@ -8,6 +8,7 @@ local LoadingScreen = require(ReplicatedStorage.Shared.UI.Screens.LoadingScreen)
 local MainMenu = require(ReplicatedStorage.Shared.UI.Screens.MainMenu)
 local FadeOverlay = require(ReplicatedStorage.Shared.UI.FadeOverlay)
 local EyeOpenOverlay = require(ReplicatedStorage.Shared.UI.EyeOpenOverlay)
+local RewardPopup = require(ReplicatedStorage.Shared.UI.RewardPopup)
 
 local e = React.createElement
 
@@ -57,6 +58,8 @@ local function RootUI(props: RootUIProps)
 			onComplete = props.onFadeComplete,
 		})
 	end
+
+	children.RewardPopup = e(RewardPopup)
 
 	return e(React.Fragment, nil, children)
 end
