@@ -7,6 +7,7 @@ local GameFlowAtoms = require(ReplicatedStorage.Shared.State.GameFlowAtoms)
 local LoadingScreen = require(ReplicatedStorage.Shared.UI.Screens.LoadingScreen)
 local MainMenu = require(ReplicatedStorage.Shared.UI.Screens.MainMenu)
 local FadeOverlay = require(ReplicatedStorage.Shared.UI.FadeOverlay)
+local EyeOpenOverlay = require(ReplicatedStorage.Shared.UI.EyeOpenOverlay)
 
 local e = React.createElement
 
@@ -18,7 +19,6 @@ export type RootUIProps = {
 local function RootUI(props: RootUIProps)
 	local phase, setPhase = React.useState(GameFlowAtoms.phase())
 
-	-- Subscribe to the Charm atom for phase changes
 	React.useEffect(function()
 		local cleanup = Charm.subscribe(GameFlowAtoms.phase, function(newPhase)
 			setPhase(newPhase)
@@ -28,28 +28,32 @@ local function RootUI(props: RootUIProps)
 
 	local children: { [string]: any } = {}
 
-	-- FadingFromLoading shows the menu BEHIND the loading screen as it fades out!
-	if phase == "Loading" or phase == "FadingFromLoading" then
-		children.LoadingScreen = e(LoadingScreen, {
-			fadingOut = (phase == "FadingFromLoading")
-		})
+	-- Show LoadingScreen during Loading and while fading to black from it
+	if phase == "Loading" or phase == "FadingToBlackFromLoading" then
+		children.LoadingScreen = e(LoadingScreen, { fadingOut = false })
 	end
 
-	if phase == "Menu" or phase == "FadingFromLoading" or phase == "FadingToBlack" then
+	-- Show MainMenu while fading into it, while in it, and while fading to black from it
+	if phase == "FadingInMenu" or phase == "Menu" or phase == "FadingToBlackFromMenu" then
 		children.MainMenu = e(MainMenu, {
 			onPlay = props.onPlay,
 		})
 	end
 
-	-- FadeOverlay for transitions
-	if phase == "FadingToBlack" then
+	-- FadeOverlay handles loading/menu transitions
+	if phase == "FadingToBlackFromLoading" or phase == "FadingToBlackFromMenu" then
 		children.FadeOverlay = e(FadeOverlay, {
-			isFadingIn = false, -- tween from clear to black
+			isFadingIn = false,
 			onComplete = props.onFadeComplete,
 		})
-	elseif phase == "FadingIn" then
+	elseif phase == "FadingInMenu" then
 		children.FadeOverlay = e(FadeOverlay, {
-			isFadingIn = true, -- tween from black to clear
+			isFadingIn = true,
+			onComplete = props.onFadeComplete,
+		})
+	elseif phase == "FadingInGame" then
+		-- Eye-opening effect for spawning into gameplay
+		children.EyeOpen = e(EyeOpenOverlay, {
 			onComplete = props.onFadeComplete,
 		})
 	end

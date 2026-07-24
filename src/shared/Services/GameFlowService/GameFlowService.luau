@@ -18,12 +18,11 @@ type GameFlowService = {
 
 local GameFlowService = {} :: GameFlowService & typeof(setmetatable({}, {}))
 
-local MIN_LOADING_TIME = 2.5 -- Give the beautiful loading screen some time to shine
+local MIN_LOADING_TIME = 2.5
 
 function GameFlowService.Init(_self: GameFlowService)
 	local player = Players.LocalPlayer
 
-	-- Bind for fade completion signaling
 	local fadeCompleteEvent = Instance.new("BindableEvent")
 
 	local function onFadeComplete()
@@ -31,39 +30,34 @@ function GameFlowService.Init(_self: GameFlowService)
 	end
 
 	local function onPlay()
-		-- Transition: Menu -> FadingToBlack
-		GameFlowAtoms.phase("FadingToBlack")
+		GameFlowAtoms.phase("FadingToBlackFromMenu")
 	end
 
-	-- Mount UI with callbacks
 	mount(e(RootUI, {
 		onPlay = onPlay,
 		onFadeComplete = onFadeComplete,
 	}))
 
-	-- Start the flow
 	task.spawn(function()
 		-- === LOADING PHASE ===
 		GameFlowAtoms.phase("Loading")
 		local loadStart = os.clock()
 
-		-- Preload assets
 		pcall(function()
 			ContentProvider:PreloadAsync(game:GetDescendants())
 		end)
 
-		-- Ensure minimum display time
 		local elapsed = os.clock() - loadStart
 		if elapsed < MIN_LOADING_TIME then
 			task.wait(MIN_LOADING_TIME - elapsed)
 		end
 
-		-- Start the cinematic camera BEFORE fading the loading screen out, 
-		-- so it's already moving dynamically when the menu reveals!
+		-- Start the camera path while the screen is still black
 		local useFocus = math.random() > 0.5
 		local focusTarget = nil
 		if useFocus then
-			local cameraPaths = Workspace:FindFirstChild("CameraPaths") or ReplicatedStorage:FindFirstChild("CameraPaths")
+			local cameraPaths = Workspace:FindFirstChild("CameraPaths")
+				or ReplicatedStorage:FindFirstChild("CameraPaths")
 			if cameraPaths then
 				local introPath = cameraPaths:FindFirstChild("IntroPath")
 				if introPath then
@@ -72,24 +66,30 @@ function GameFlowService.Init(_self: GameFlowService)
 			end
 		end
 
-		CameraService:Play("IntroPath", { 
+		CameraService:Play("IntroPath", {
 			loop = true,
-			focusTarget = focusTarget
+			focusTarget = focusTarget,
 		})
 
-		-- === FADE FROM LOADING ===
-		GameFlowAtoms.phase("FadingFromLoading")
-		task.wait(1.5) -- wait for the exact duration of the LoadingScreen fade tween
+		-- === FADE TO BLACK FROM LOADING ===
+		-- Screen goes black over the loading screen, hiding it cleanly
+		GameFlowAtoms.phase("FadingToBlackFromLoading")
+		fadeCompleteEvent.Event:Wait()
+
+		-- === FADE IN TO MENU ===
+		-- Now the menu is mounted behind the black overlay; fade reveals it
+		GameFlowAtoms.phase("FadingInMenu")
+		fadeCompleteEvent.Event:Wait()
 
 		-- === MENU PHASE ===
 		GameFlowAtoms.phase("Menu")
 
-		-- Wait for Play button press (phase change to FadingToBlack)
-		while GameFlowAtoms.phase() ~= "FadingToBlack" do
+		-- Wait for Play button press
+		while GameFlowAtoms.phase() ~= "FadingToBlackFromMenu" do
 			task.wait()
 		end
 
-		-- Wait for fade-to-black animation to complete
+		-- Wait for fade-to-black to finish
 		fadeCompleteEvent.Event:Wait()
 
 		-- === SPAWN ===
@@ -99,16 +99,14 @@ function GameFlowService.Init(_self: GameFlowService)
 		local requestSpawn = remotesFolder:WaitForChild("RequestSpawn")
 		requestSpawn:FireServer()
 
-		-- Wait for character to load
 		if not player.Character then
 			player.CharacterAdded:Wait()
 		end
 
-		-- Small delay for character to fully load and the world to stream
 		task.wait(0.5)
 
-		-- === FADE IN ===
-		GameFlowAtoms.phase("FadingIn")
+		-- === FADE IN TO GAMEPLAY ===
+		GameFlowAtoms.phase("FadingInGame")
 		fadeCompleteEvent.Event:Wait()
 
 		-- === GAMEPLAY ===
