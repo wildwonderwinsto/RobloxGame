@@ -1,6 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
-local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 
 type LeverServiceServer = {
@@ -18,7 +17,7 @@ LeverServiceServer._lastSpawnedItem = {}
 -- Configuration – adjust to your needs
 local PLATFORM_NAME = "smallPlatform" -- name of the platform part in Workspace
 local SPAWN_OFFSET = Vector3.new(0, 3, 0) -- how high above the platform
-local ITEMS_FOLDER_NAME = "Items" -- name of the folder in ServerStorage containing items to spawn
+local ITEMS_FOLDER_NAME = "Items" -- name of the folder in ReplicatedStorage.Shared.Assets containing items to spawn
 
 local function spawnPartOnPlatform(spawnCount: number, lastItemName: string?)
 	local pathNames = { "GameLevel", "Table", "gameLoop", "Player1", PLATFORM_NAME }
@@ -49,9 +48,9 @@ local function spawnPartOnPlatform(spawnCount: number, lastItemName: string?)
 		return nil
 	end
 
-	local itemsFolder = ServerStorage:FindFirstChild(ITEMS_FOLDER_NAME)
+	local itemsFolder = ReplicatedStorage.Shared.Assets:FindFirstChild(ITEMS_FOLDER_NAME)
 	if not itemsFolder then
-		warn("Items folder not found in ServerStorage:", ITEMS_FOLDER_NAME)
+		warn("Items folder not found in ReplicatedStorage.Shared.Assets:", ITEMS_FOLDER_NAME)
 		return nil
 	end
 
@@ -83,12 +82,13 @@ local function spawnPartOnPlatform(spawnCount: number, lastItemName: string?)
 
 	-- Increase the Y height by 1.5 studs for every item spawned so they stack on top of each other!
 	local stackedOffset = SPAWN_OFFSET + Vector3.new(0, spawnCount * 1.5, 0)
+	local stackedPlatformCFrame = platformCFrame + stackedOffset
 
 	-- Rotate the Bread Slice by -90 degrees on the X axis
 	local isBread = originalModel.Name == "Bread Slice"
 	local rotationOffset = isBread and CFrame.Angles(math.rad(-90), 0, 0) or CFrame.Angles(0, 0, 0)
 
-	local targetCFrame = (platformCFrame + stackedOffset) * rotationOffset
+	local targetCFrame = stackedPlatformCFrame * rotationOffset
 
 	-- Ensure physics are applied without the model falling apart
 	if clonedModel:IsA("Model") then
@@ -118,7 +118,7 @@ local function spawnPartOnPlatform(spawnCount: number, lastItemName: string?)
 	task.delay(4, function()
 		clonedModel.Parent = Workspace
 	end)
-	return originalModel.Name, clonedModel
+	return originalModel.Name, clonedModel, stackedPlatformCFrame
 end
 
 function LeverServiceServer.Init(self: LeverServiceServer)
@@ -143,11 +143,11 @@ function LeverServiceServer.Init(self: LeverServiceServer)
 		self._spawnCounts[player] = currentCount + 1
 
 		local lastItem = self._lastSpawnedItem[player]
-		local spawnedItemName, spawnedModel = spawnPartOnPlatform(currentCount, lastItem)
+		local spawnedItemName, spawnedModel, platformCFrame = spawnPartOnPlatform(currentCount, lastItem)
 		if spawnedItemName then
 			self._lastSpawnedItem[player] = spawnedItemName
 			-- Fire immediately so the client can start the drumroll
-			rewardRevealEvent:FireClient(player, spawnedItemName, nil)
+			rewardRevealEvent:FireClient(player, spawnedItemName, nil, platformCFrame)
 			-- Fire again after the item has spawned with the actual instance
 			task.delay(4, function()
 				rewardRevealEvent:FireClient(player, spawnedItemName, spawnedModel)

@@ -4,9 +4,12 @@ local Players = game:GetService("Players")
 local Debris = game:GetService("Debris")
 
 local RewardRevealAtoms = require(ReplicatedStorage.Shared.State.RewardRevealAtoms)
+local Janitor = require(ReplicatedStorage.Packages.Janitor)
+local ItemDisplayUtil = require(ReplicatedStorage.Shared.Modules.Game.ItemDisplayUtil)
 
 type RewardRevealClient = {
 	_revealCount: number,
+	_reelJanitor: any,
 	Init: (self: RewardRevealClient) -> (),
 }
 
@@ -135,10 +138,68 @@ function RewardRevealClient.Init(self: RewardRevealClient)
 	local remotesFolder = ReplicatedStorage:WaitForChild("Remotes")
 	local rewardRevealEvent = remotesFolder:WaitForChild("RewardReveal")
 
-	rewardRevealEvent.OnClientEvent:Connect(function(itemName: string, spawnedItem: Instance?)
+	rewardRevealEvent.OnClientEvent:Connect(function(itemName: string, spawnedItem: Instance?, platformCFrame: CFrame?)
 		if not spawnedItem then
 			-- First fire: start the drumroll anticipation
 			playSound("rbxassetid://119989901283078", Workspace, 0.6)
+			
+			if self._reelJanitor then
+				self._reelJanitor:Cleanup()
+			end
+			self._reelJanitor = Janitor.new()
+			
+			local startTime = os.clock()
+			local reelThread = task.spawn(function()
+				local sharedDir = ReplicatedStorage:WaitForChild("Shared", 3)
+				local assetsDir = sharedDir and sharedDir:WaitForChild("Assets", 3)
+				local itemsFolder = assetsDir and assetsDir:WaitForChild("Items", 3)
+				
+				if not itemsFolder then
+					warn("[RewardRevealClient] Items folder missing on client!")
+					return
+				end
+				
+				while os.clock() - startTime < 3.75 do
+					local items = itemsFolder:GetChildren()
+					if #items == 0 then break end
+					
+					local randomItem = items[math.random(1, #items)]
+					local clone = randomItem:Clone()
+					ItemDisplayUtil.normalizeSize(clone)
+					
+					-- Ensure all parts are anchored and cannot collide
+					for _, desc in clone:GetDescendants() do
+						if desc:IsA("BasePart") then
+							desc.Anchored = true
+							desc.CanCollide = false
+						end
+					end
+					if clone:IsA("BasePart") then
+						clone.Anchored = true
+						clone.CanCollide = false
+					end
+					
+					if platformCFrame then
+						local isBread = clone.Name == "Bread Slice"
+						local rotationOffset = isBread and CFrame.Angles(math.rad(-90), 0, 0) or CFrame.Angles(0, 0, 0)
+						
+						ItemDisplayUtil.applyContinuousMotion(clone, platformCFrame, startTime, rotationOffset)
+					end
+					clone.Parent = Workspace
+					self._reelJanitor:Add(clone)
+					
+					task.wait(0.25)
+					if clone.Parent then
+						clone:Destroy()
+					end
+				end
+			end)
+			-- Some Janitor versions handle thread cancellation, but we can also just let it expire naturally.
+			-- Add the thread to Janitor if it supports it, else it will just keep checking os.clock().
+			pcall(function()
+				self._reelJanitor:Add(reelThread)
+			end)
+			
 			return
 		end
 
